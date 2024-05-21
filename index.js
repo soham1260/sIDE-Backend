@@ -1,8 +1,6 @@
 const express = require('express');
 const app = express();
 const cors = require('cors');
-const Docker = require('dockerode');
-const docker = new Docker();
 const execute_c = require('./execute_c');
 const execute_cpp = require('./execute_cpp');
 const execute_python = require('./execute_python');
@@ -24,23 +22,26 @@ app.post('/submitcode', async (req, res) => {
   const { code, input, language, filename } = req.body;
   let response;
 
-  switch(language) {
-    case "c":
-      response = await execute_c(code,input)
-      break;
-    case "cpp":
-      response = await execute_cpp(code,input)
-      break;
-    case "python":
-      response = await execute_python(code,input)
-      break;
-    case "java":
-      response = await execute_java(code,input,filename)
-      break;
-    default:
-      // code block
+  try {
+      switch(language) {
+        case "c":
+          response = await execute_c(code,input)
+          break;
+        case "cpp":
+          response = await execute_cpp(code,input)
+          break;
+        case "python":
+          response = await execute_python(code,input)
+          break;
+        case "java":
+          response = await execute_java(code,input,filename)
+          break;
+        default:
+          res.status(500).json({ error: 'Unexpected Input' });
+    }
+  } catch (error) {
   }
-  res.send(response)
+  res.send(response);
 });
 
 app.listen(process.env.PORT, () => {
