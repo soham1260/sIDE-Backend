@@ -69,7 +69,7 @@ app.post(
             email +
             " logged in"
         );
-        res.json({ success: true, "sIDE+AuthToken":authtoken });
+        res.json({ success: true, authtoken });
       })
       .catch((error) => {
         if (error.message === "Invalid email or password") {
@@ -197,7 +197,7 @@ app.listen(process.env.PORT, () => {
 });
 
 const fetchuser = (req,res,next ) => {
-  const token = req.header('sIDE+AuthToken');
+  const token = req.header('auth-token');
   if(!token){
       res.status(401).send({error : "Invalid token"});
   }
