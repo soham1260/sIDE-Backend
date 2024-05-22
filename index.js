@@ -69,7 +69,7 @@ app.post(
             email +
             " logged in"
         );
-        res.json({ success: true, authtoken });
+        res.json({ success: true, "sIDE+AuthToken":authtoken });
       })
       .catch((error) => {
         if (error.message === "Invalid email or password") {
@@ -141,7 +141,7 @@ app.post(
             user.email +
             " signed in"
         );
-        res.json({ success, authtoken });
+        res.json({ success, "sIDE+AuthToken":authtoken });
       })
       .catch((error) => {
         console.error(error.message);
