@@ -141,7 +141,7 @@ app.post(
             user.email +
             " signed in"
         );
-        res.json({ success, "sIDE+AuthToken":authtoken });
+        res.json({ success, authtoken });
       })
       .catch((error) => {
         console.error(error.message);
@@ -263,3 +263,57 @@ app.post('/savefile', fetchuser, async (req, res) => {
   }
 });
 
+app.get("/fetchuserdata",fetchuser,async(req,res) => {
+  try {
+    const user = await User.findById(req.user.id, 'codes.filename codes.code codes.language codes._id');
+    res.status(200).json(user);
+  } catch (error) {
+    console.error('Error fetching user data:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.get("/fetchcode",fetchuser,async(req,res) => {
+  const { id } = req.query;
+  try {
+    const user = await User.findById(req.user.id);
+    
+    const code = user.codes.find(code => code._id.toString() === id);
+    
+    if (!code) {
+      return res.status(200).json({ message: 'Code not found' });
+    }
+
+    res.json({
+      language: code.language,
+      code: code.code,
+      filename: code.filename
+    });
+  } catch (error) {
+    console.error('Error fetching user data:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.get("/deletecode",fetchuser,async(req,res) => {
+  const { id } = req.query;
+
+  try {
+    const user = await User.findById(req.user.id);
+    const codeIndex = user.codes.findIndex(code => code._id.toString() === id);
+
+    if (codeIndex === -1) {
+      return res.status(404).json({ message: 'Unauthorized' });
+    }
+
+    user.codes.splice(codeIndex, 1);
+
+    await user.save();
+
+    const response = await User.findById(req.user.id, 'codes.filename codes.code codes.language codes._id');
+
+    res.status(200).json(response);
+  } catch (error) {
+    
+  }
+});
