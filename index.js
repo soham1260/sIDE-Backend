@@ -8,6 +8,7 @@ const execute_c = require("./execute_c");
 const execute_cpp = require("./execute_cpp");
 const execute_python = require("./execute_python");
 const execute_java = require("./execute_java");
+const execute_javascript = require("./execute_javascript");
 
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -184,6 +185,9 @@ app.post("/submitcode", async (req, res) => {
         break;
       case "java":
         response = await execute_java(code, input, filename);
+        break;
+      case "javascript":
+        response = await execute_javascript(code, input);
         break;
       default:
         res.status(500).json({ error: "Unexpected Input" });
