@@ -192,7 +192,10 @@ app.post("/submitcode", async (req, res) => {
       default:
         res.status(500).json({ error: "Unexpected Input" });
     }
-  } catch (error) {}
+  } catch (error) {
+    console.log(error);
+    res.status(500).send("Internal Server Error");
+  }
   res.send(response);
 });
 

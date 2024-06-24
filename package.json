@@ -20,5 +20,8 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.4.0",
     "strip-ansi": "^7.1.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
   }
 }

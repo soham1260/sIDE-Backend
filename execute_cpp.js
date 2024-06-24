@@ -1,6 +1,6 @@
 require('dotenv').config();
 const Docker = require('dockerode');
-const docker = new Docker({host: process.env.VM_IP, port: process.env.VM_PORT});
+const docker = new Docker();
 
 const execute_cpp = async (code, input) => {
     const escapedCode = code.replace(/"/g, '\\"');
@@ -8,7 +8,7 @@ const execute_cpp = async (code, input) => {
     try {
       const container = await docker.createContainer({
         Image: 'gcc',
-        Cmd: ['/bin/bash', '-c', `echo "${escapedCode}" > temp.cpp && g++ -o temp temp.cpp && ./temp <<< "${input}"`],
+        Cmd: ['/bin/bash', '-c', `echo "${escapedCode}" > temp.cpp && g++ -o temp temp.cpp && timeout 5 ./temp <<< "${input}"`],
         AttachStdout: true,
         AttachStderr: true,
         Tty: true
@@ -28,9 +28,18 @@ const execute_cpp = async (code, input) => {
     
           stream.on('end', async () => {
             try {
-              await container.wait();
+              const containerInfo = await container.inspect();
+              const exitCode = containerInfo.State.ExitCode;
               const stripAnsi = (await import('strip-ansi')).default;
-              resolve({ ans: stripAnsi(output) });
+
+              if (exitCode === 124) {
+                resolve({ ans: `EXECUTION TIMED OUT\nOUTPUT CAPTURED TILL TIMEOUT\n${stripAnsi(output)}`});
+              } else if (exitCode !== 0) {
+                reject(new Error(`Program exited with status ${exitCode}`));
+              } else {
+                await container.wait();
+                resolve({ ans: stripAnsi(output) });
+              }
             } catch (error) {
               reject(error);
             } finally {
