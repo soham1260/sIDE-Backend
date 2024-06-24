@@ -1,6 +1,6 @@
 require('dotenv').config();
 const Docker = require('dockerode');
-const docker = new Docker();
+const docker = new Docker({host: process.env.VM_IP, port: process.env.VM_PORT});
 
 const execute_java = async (code, input, filename) => {
     const escapedCode = code.replace(/"/g, '\\"');
