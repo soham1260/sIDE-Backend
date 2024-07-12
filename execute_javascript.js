@@ -4,7 +4,7 @@ const docker = new Docker({host: process.env.VM_IP, port: process.env.VM_PORT});
 
 const execute_js = async (code, input) => {
     const escapedCode = code.replace(/"/g, '\\"');
-  
+    console.log(code);
     try {
         const container = await docker.createContainer({
           Image: 'node:latest',
@@ -32,12 +32,12 @@ const execute_js = async (code, input) => {
                 const stripAnsi = (await import('strip-ansi')).default;
 
                 if (exitCode === 124) {
-                  resolve({ ans: `EXECUTION TIMED OUT\nOUTPUT CAPTURED TILL TIMEOUT\n${stripAnsi(output)}`});
+                  resolve({ ans: `EXECUTION TIMED OUT\nOUTPUT CAPTURED TILL TIMEOUT\n${stripAnsi(output.slice(0,500000))}`});
                 } else if (exitCode !== 0) {
                   reject(new Error(`Program exited with status ${exitCode}`));
                 } else {
-                    await container.wait();
-                  resolve({ ans: stripAnsi(output) });
+                  await container.wait();
+                  resolve({ ans: stripAnsi(output.slice(0,500000)) });
                 }
               } catch (error) {
                 reject(error);

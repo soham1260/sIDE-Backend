@@ -8,7 +8,7 @@ const execute_python = async (code, input) => {
     try {
       const container = await docker.createContainer({
         Image: 'python',
-        Cmd: ['/bin/bash', '-c', `echo "${escapedCode}" > temp.py && python temp.py <<< "${input}"`],
+        Cmd: ['/bin/bash', '-c', `echo "${escapedCode}" > temp.py && timeout 5 python temp.py <<< "${input}"`],
         AttachStdout: true,
         AttachStderr: true,
         Tty: true
@@ -28,9 +28,18 @@ const execute_python = async (code, input) => {
     
           stream.on('end', async () => {
             try {
-              await container.wait();
+              const containerInfo = await container.inspect();
+              const exitCode = containerInfo.State.ExitCode;
               const stripAnsi = (await import('strip-ansi')).default;
-              resolve({ ans: stripAnsi(output) });
+
+              if (exitCode === 124) {
+                resolve({ ans: `EXECUTION TIMED OUT\nOUTPUT CAPTURED TILL TIMEOUT\n${stripAnsi(output.slice(0,500000))}`});
+              } else if (exitCode !== 0) {
+                reject(new Error(`Program exited with status ${exitCode}`));
+              } else {
+                await container.wait();
+                resolve({ ans: stripAnsi(output.slice(0,500000)) });
+              }
             } catch (error) {
               reject(error);
             } finally {
