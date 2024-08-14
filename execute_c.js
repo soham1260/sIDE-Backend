@@ -4,7 +4,8 @@ const docker = new Docker({host: process.env.VM_IP, port: process.env.VM_PORT});
 
 const execute_c = async (code, input) => {
     const escapedCode = code.replace(/"/g, '\\"');
-  
+    console.log(escapedCode);
+    
     try {
         const container = await docker.createContainer({
           Image: 'gcc',
@@ -33,6 +34,8 @@ const execute_c = async (code, input) => {
 
                 if (exitCode === 124) {
                   resolve({ ans: `EXECUTION TIMED OUT\nOUTPUT CAPTURED TILL TIMEOUT\n${stripAnsi(output.slice(0,500000))}`});
+                } else if (exitCode === 1) {                  
+                  resolve({ans:stripAnsi(output.slice(0,500000))})
                 } else if (exitCode !== 0) {
                   reject(new Error(`Program exited with status ${exitCode}`));
                 } else {

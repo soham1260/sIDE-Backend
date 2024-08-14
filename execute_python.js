@@ -34,6 +34,8 @@ const execute_python = async (code, input) => {
 
               if (exitCode === 124) {
                 resolve({ ans: `EXECUTION TIMED OUT\nOUTPUT CAPTURED TILL TIMEOUT\n${stripAnsi(output.slice(0,500000))}`});
+              } else if (exitCode === 1) {                  
+                resolve({ans:stripAnsi(output.slice(0,500000))})
               } else if (exitCode !== 0) {
                 reject(new Error(`Program exited with status ${exitCode}`));
               } else {
