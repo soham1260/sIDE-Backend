@@ -2,6 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 mongoose.connect(process.env.DB);
+const { v4: uuidv4 } = require('uuid');
 const app = express();
 const cors = require("cors");
 const execute_c = require("./execute_c");
@@ -28,6 +29,30 @@ const userSchema = new mongoose.Schema({
   ],
 });
 const User = mongoose.model("User", userSchema);
+
+const tempCodeSchema = new mongoose.Schema({
+  code: {
+      type: String,
+      required: true
+  },
+  expiresAt: {
+      type: Date,
+      required: true
+  },
+  // user: {
+  //   type: mongoose.Schema.Types.ObjectId,
+  //   ref: 'User',
+  //   required: true
+  // },
+  language: { type: String },
+  name: { type: String },
+  uuid: {
+    type: String,
+    default: uuidv4,
+    required: true
+  }
+});
+const tempCode = mongoose.model("tempCode", tempCodeSchema);
 
 app.use(cors());
 app.use(express.json());
@@ -321,6 +346,70 @@ app.get("/deletecode",fetchuser,async(req,res) => {
 
     res.status(200).json(response);
   } catch (error) {
+    res.status(500).send('Server error');
+  }
+});
+
+app.post("/sharecode",async(req,res) => {
+
+  try {
+    const { language, code, name } = req.body;
+    const newTempCode = new tempCode({
+      code: code,
+      expiresAt: new Date(Date.now() + 300 * 1000),
+      language: language,
+      name: name
+    });
+
+    const savedCode = await newTempCode.save();
     
+    res.status(200).json({urlid : savedCode.uuid})
+  } catch (error) {
+    res.status(500).send('Server error');
+  }
+});
+
+
+app.get('/sharedcode/:uuid', async (req, res) => {
+  try {
+    
+    const sharedCode = await tempCode.findOne({ uuid: req.params.uuid });//.populate('user')
+
+    if (!sharedCode) {
+      return res.status(404).send({message : 'Code not found or expired'});
+    }
+
+    res.json({
+      language:sharedCode.language,
+      code: sharedCode.code,
+      name: sharedCode.name
+      // user: sharedCode.user.name
+    });
+  } catch (err) {
+    res.status(500).send('Server error');
+  }
+});
+
+app.post("/synccode",async(req,res) => {
+  const { language, code, id } = req.body;
+  try {
+    const updatedCode = await tempCode.findOneAndUpdate(
+      { uuid: id },
+      {
+        $set: {
+          code: code,
+          language: language
+        }
+      },
+      { new: true }
+    );
+
+    if (!updatedCode) {
+      return res.status(404).json({ message: "File not found" });
+    }
+  } catch (error) {
+    console.log(error);
+    
+    res.status(500).send('Server error');
   }
 });
